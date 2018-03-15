@@ -138,17 +138,14 @@ gulp.task('serve', ['scripts', 'styles'], () => {
     browserSync({
         open: false,
         notify: false,
-        // Customize the Browsersync console logging prefix
         logPrefix: 'WSK',
-        // Allow scroll syncing across breakpoints
         scrollElementMapping: ['main', '.mdl-layout'],
-        // Run as an https by uncommenting 'https: true'
-        // Note: this uses an unsigned certificate which on first access
-        //       will present a certificate warning in the browser.
-        // https: true,
         server: ['.tmp', 'app'],
         port: 3000,
-        https: true
+        https: {
+            key: ".ssl/hal8001/privkey.pem",
+            cert: ".ssl/hal8001/fullchain.pem"
+        }
     });
 
     gulp.watch(['app/**/*.html'], reload);
