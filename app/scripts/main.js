@@ -2,11 +2,9 @@
 /*eslint padded-blocks: "off"*/
 import * as THREE from 'three';
 import EffectComposer, {RenderPass, ShaderPass, CopyShader} from 'three-effectcomposer-es6';
-import {DuoToneShader, BarrelBlurShader} from './shaders';
-
+import {DuoToneShader, BarrelBlurShader, ContrastShader} from './shaders';
 document.addEventListener('DOMContentLoaded', () => {
     // INIT SCENE
-
     const scene = new THREE.Scene();
     const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     //const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
@@ -26,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navigator.mediaDevices.getUserMedia({
         audio: true, video: {
-            facingMode: 'user'
+            facingMode: 'environment'
         }
     })
         .then((stream) => {
@@ -38,7 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const texture = new THREE.VideoTexture(video);
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
-    texture.format = THREE.RGBFormat;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.ClampToEdgeWrapping;
 
     // BASE OBJECT
     const geometry = new THREE.PlaneBufferGeometry(2, 2);
@@ -54,8 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
 
-    composer.addPass(new ShaderPass(DuoToneShader));
+    //composer.addPass(new ShaderPass(DuoToneShader));
+    composer.addPass(new ShaderPass(ContrastShader));
+
     composer.addPass(new ShaderPass(BarrelBlurShader));
+
 
     const copyPass = new ShaderPass(CopyShader);
     copyPass.renderToScreen = true;
@@ -63,6 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ANIMATION
     const render = (timestamp) => {
+        BarrelBlurShader.uniforms.time.value = timestamp;
+
         composer.render();
         requestAnimationFrame(render);
     };
