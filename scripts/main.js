@@ -46548,7 +46548,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navigator.mediaDevices.getUserMedia({
         audio: true, video: {
-            facingMode: 'environment'
+            facingMode: 'environment',
+            width: {
+                exact: 1280
+            },
+            height: {
+                exact: 720
+            }
         }
     })
         .then((stream) => {
@@ -46577,10 +46583,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const composer = new __WEBPACK_IMPORTED_MODULE_1_three_effectcomposer_es6___default.a(renderer);
     composer.addPass(new __WEBPACK_IMPORTED_MODULE_1_three_effectcomposer_es6__["RenderPass"](scene, camera));
 
-    //composer.addPass(new ShaderPass(DuoToneShader));
-    composer.addPass(new __WEBPACK_IMPORTED_MODULE_1_three_effectcomposer_es6__["ShaderPass"](__WEBPACK_IMPORTED_MODULE_2__shaders__["b" /* ContrastShader */]));
 
-    composer.addPass(new __WEBPACK_IMPORTED_MODULE_1_three_effectcomposer_es6__["ShaderPass"](__WEBPACK_IMPORTED_MODULE_2__shaders__["a" /* BarrelBlurShader */]));
+
+    composer.addPass(new __WEBPACK_IMPORTED_MODULE_1_three_effectcomposer_es6__["ShaderPass"](__WEBPACK_IMPORTED_MODULE_2__shaders__["b" /* DuoToneShader */]));
+    //composer.addPass(new ShaderPass(BarrelBlurShader));
+    let time = 0;
+    composer.addPass(new __WEBPACK_IMPORTED_MODULE_1_three_effectcomposer_es6__["ShaderPass"](__WEBPACK_IMPORTED_MODULE_2__shaders__["a" /* ContrastShader */]));
 
 
     const copyPass = new __WEBPACK_IMPORTED_MODULE_1_three_effectcomposer_es6__["ShaderPass"](__WEBPACK_IMPORTED_MODULE_1_three_effectcomposer_es6__["CopyShader"]);
@@ -46589,8 +46597,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ANIMATION
     const render = (timestamp) => {
-        __WEBPACK_IMPORTED_MODULE_2__shaders__["a" /* BarrelBlurShader */].uniforms.time.value = timestamp;
-
         composer.render();
         requestAnimationFrame(render);
     };
@@ -46871,7 +46877,7 @@ const DuoToneShader = {
             value: null
         },
         colLight: {
-            value: new __WEBPACK_IMPORTED_MODULE_0_three__["Color"](0xff00000)
+            value: new __WEBPACK_IMPORTED_MODULE_0_three__["Color"](0xff12120)
         },
         colDark: {
             value: new __WEBPACK_IMPORTED_MODULE_0_three__["Color"](0x0000000)
@@ -46880,7 +46886,7 @@ const DuoToneShader = {
     vertexShader: __WEBPACK_IMPORTED_MODULE_2__shaders_VertexShader_glsl___default.a,
     fragmentShader: __WEBPACK_IMPORTED_MODULE_3__shaders_DuoToneFragment_glsl___default.a
 };
-/* unused harmony export DuoToneShader */
+/* harmony export (immutable) */ __webpack_exports__["b"] = DuoToneShader;
 
 
 const BarrelBlurShader = {
@@ -46891,7 +46897,7 @@ const BarrelBlurShader = {
         },
         amount: {
             type: "f",
-            value: 0.35
+            value: 0.25
         },
         time: {
             type: "f",
@@ -46901,7 +46907,7 @@ const BarrelBlurShader = {
     vertexShader: __WEBPACK_IMPORTED_MODULE_2__shaders_VertexShader_glsl___default.a,
     fragmentShader: __WEBPACK_IMPORTED_MODULE_1__shaders_BarrelFragment_glsl___default.a
 };
-/* harmony export (immutable) */ __webpack_exports__["a"] = BarrelBlurShader;
+/* unused harmony export BarrelBlurShader */
 
 
 const ContrastShader = {
@@ -46911,37 +46917,57 @@ const ContrastShader = {
         },
         brightness: {
             type: "f",
-            value: -0.2
+            value: -0.015 // -0.5
         },
         contrast: {
             type: "f",
-            value: 4
+            value: 1.5
         }
     },
     vertexShader: __WEBPACK_IMPORTED_MODULE_2__shaders_VertexShader_glsl___default.a,
     fragmentShader: __WEBPACK_IMPORTED_MODULE_4__shaders_ContrastFragment_glsl___default.a
 };
-/* harmony export (immutable) */ __webpack_exports__["b"] = ContrastShader;
+/* harmony export (immutable) */ __webpack_exports__["a"] = ContrastShader;
 
 
-const ZoomBlur = {
+const ZoomBloor = {
     uniforms: {
-        tInput: {
+        tDiffuse: {
             value: null
         },
-        strength: {
-            type: "f",
-            value: 1.0
+        strength: { type: 'f', value: 0 },
+        center: { type: 'v2', value: new __WEBPACK_IMPORTED_MODULE_0_three__["Vector2"]( window.innerWidth *0.5,  window.innerHeight*0.5 ) },
+        resolution: { type: 'v2', value: new __WEBPACK_IMPORTED_MODULE_0_three__["Vector2"](  window.innerWidth,  window.innerHeight ) }
+    },
+    vertexShader: __WEBPACK_IMPORTED_MODULE_2__shaders_VertexShader_glsl___default.a,
+    fragmentShader: __WEBPACK_IMPORTED_MODULE_5__shaders_ZoomBlur_glsl___default.a
+};
+/* unused harmony export ZoomBloor */
+
+
+const GlitcherShader = {
+    uniforms: {
+        tDiffuse: {
+            type: "t",
+            value: null
         },
-        contrast: {
+        amount: {
             type: "f",
-            value: 2.0
+            value: 2.5
+        },
+        speed: {
+            type: "f",
+            value: .5
+        },
+        time: {
+            type: "f",
+            value: 0
         }
     },
     vertexShader: __WEBPACK_IMPORTED_MODULE_2__shaders_VertexShader_glsl___default.a,
-    fragmentShader: __WEBPACK_IMPORTED_MODULE_4__shaders_ContrastFragment_glsl___default.a
-};
-/* unused harmony export ZoomBlur */
+    fragmentShader: ["uniform sampler2D tDiffuse;", "varying vec2 vUv;", "uniform float amount;", "uniform float speed;", "uniform float time;", "float random1d(float n){", "return fract(sin(n) * 43758.5453);", "}", "float random2d(vec2 n) { ", "return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);", "}", "float randomRange (in vec2 seed, in float min, in float max) {", "return min + random2d(seed) * (max - min);", "}", "float insideRange(float v, float bottom, float top) {", "return step(bottom, v) - step(top, v);", "}", "float rand(vec2 co){", "return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);", "}", "void main() {", "vec2 uv = vUv;", "float sTime = floor(time * speed * 6.0 * 24.0);", "vec3 inCol = texture2D(tDiffuse, uv).rgb;", "vec3 outCol = inCol;", "float maxOffset = amount/2.0;", "vec2 uvOff;", "for (float i = 0.0; i < 10.0; i += 1.0) {", "if (i > 10.0 * amount) break;", "float sliceY = random2d(vec2(sTime + amount, 2345.0 + float(i)));", "float sliceH = random2d(vec2(sTime + amount, 9035.0 + float(i))) * 0.25;", "float hOffset = randomRange(vec2(sTime + amount, 9625.0 + float(i)), -maxOffset, maxOffset);", "uvOff = uv;", "uvOff.x += hOffset;", "vec2 uvOff = fract(uvOff);", "if (insideRange(uv.y, sliceY, fract(sliceY+sliceH)) == 1.0 ){", "outCol = texture2D(tDiffuse, uvOff).rgb;", "}", "}", "float maxColOffset = amount/6.0;", "vec2 colOffset = vec2(randomRange(vec2(sTime + amount, 3545.0),-maxColOffset,maxColOffset), randomRange(vec2(sTime , 7205.0),-maxColOffset,maxColOffset));", "uvOff = fract(uv + colOffset);", "float rnd = random2d(vec2(sTime + amount, 9545.0));", "if (rnd < 0.33){", "outCol.r = texture2D(tDiffuse, uvOff).r;", "}else if (rnd < 0.66){", "outCol.g = texture2D(tDiffuse, uvOff).g;", "} else{", "outCol.b = texture2D(tDiffuse, uvOff).b;", "}", "gl_FragColor = vec4(outCol,1.0);", "}"].join("\n")
+}
+/* unused harmony export GlitcherShader */
 
 
 
@@ -46949,7 +46975,7 @@ const ZoomBlur = {
 /* 9 */
 /***/ (function(module, exports) {
 
-module.exports = "uniform sampler2D tDiffuse;\nuniform float amount;\nuniform float time;\nvarying vec2 vUv;\nconst int num_iter = 16;\nconst float reci_num_iter_f = 0.75 / float(num_iter);\nconst float gamma = 2.2;\nconst float MAX_DIST_PX = 200.0;\nvec2 barrelDistortion( vec2 p, vec2 amt )\n{\n    p = 2.0*p-1.0;\n    const float maxBarrelPower = 2.0;\n    float theta  = atan(p.y, p.x);\n    float radius = length(p);\n    radius = pow(radius, 1.0 + maxBarrelPower * amt.x);\n    p.x = radius * cos(theta);\n    p.y = radius * sin(theta);\n    return 0.5 * ( p + 1.0 );\n}\nfloat sat( float t )\n{\n\treturn clamp( t, 0.0, 1.0 );\n}\nfloat linterp( float t ) {\n\treturn sat( 1.0 - abs( 2.0*t - 1.0 ) );\n}\nfloat remap( float t, float a, float b ) {\n\treturn sat( (t - a) / (b - a) );\n}\nvec3 spectrum_offset( float t ) {\n\tvec3 ret;\n\tfloat lo = step(t,0.25);\n\tfloat hi = 1.0-lo;\n\tfloat w = linterp( remap( t, 1.0/6.0, 5.0/6.0 ) );\n\tret = vec3(lo,1.0,hi) * vec3(1.0-w, w, 1.0-w);\n\n\treturn pow( ret, vec3(1.0/2.2) );\n}\nfloat nrand( vec2 n )\n{\n\treturn fract(sin(dot(n.xy, vec2(12.9898, 78.233))) * 41230.23);\n}\nvec3 lin2srgb( vec3 c )\n{\n    return pow( c, vec3(gamma) );\n}\nvec3 srgb2lin( vec3 c )\n{\n    return pow( c, vec3(1.0/gamma));\n}\nvoid main()\n{\n    vec2 uv = vUv;\n    vec2 max_distort = vec2(amount);\n    vec2 oversiz = barrelDistortion( vec2(1,1), max_distort );\n    uv = 2.0 * uv - 1.0;\n    uv = uv / (oversiz*oversiz);\n    uv = 0.5 * uv + 0.5;\n    vec3 sumcol = vec3(0.0);\n    vec3 sumw = vec3(0.0);\n    float rnd = nrand( uv + fract(time) );\n    for ( int i=0; i<num_iter;++i ){\n        float t = (float(i)+rnd) * reci_num_iter_f;\n        vec3 w = spectrum_offset( t );\n        sumw += w;\n        sumcol += w * srgb2lin(texture2D( tDiffuse, barrelDistortion(uv, max_distort*t ) ).rgb);\n    }\n    sumcol.rgb /= sumw;\n    vec3 outcol = lin2srgb(sumcol.rgb);\n    outcol += rnd/255.0;\n    gl_FragColor = vec4( outcol, 1.0);\n}\n"
+module.exports = "uniform sampler2D tDiffuse;\nuniform float amount;\nuniform float time;\nvarying vec2 vUv;\nconst int num_iter = 16;\nconst float reci_num_iter_f = 0.5 / float(num_iter);\nconst float gamma = 2.2;\nconst float MAX_DIST_PX = 200.0;\nvec2 barrelDistortion( vec2 p, vec2 amt )\n{\n    p = 2.0*p-1.0;\n    const float maxBarrelPower = 2.0;\n    float theta  = atan(p.y, p.x);\n    float radius = length(p);\n    radius = pow(radius, 1.0 + maxBarrelPower * amt.x);\n    p.x = radius * cos(theta);\n    p.y = radius * sin(theta);\n    return 0.5 * ( p + 1.0 );\n}\nfloat sat( float t )\n{\n\treturn clamp( t, 0.0, 1.0 );\n}\nfloat linterp( float t ) {\n\treturn sat( 1.0 - abs( 2.0*t - 1.0 ) );\n}\nfloat remap( float t, float a, float b ) {\n\treturn sat( (t - a) / (b - a) );\n}\nvec3 spectrum_offset( float t ) {\n\tvec3 ret;\n\tfloat lo = step(t,0.25);\n\tfloat hi = 1.0-lo;\n\tfloat w = linterp( remap( t, 1.0/6.0, 5.0/6.0 ) );\n\tret = vec3(lo,1.0,hi) * vec3(1.0-w, w, 1.0-w);\n\n\treturn pow( ret, vec3(1.0/2.2) );\n}\nfloat nrand( vec2 n )\n{\n\treturn fract(sin(dot(n.xy, vec2(12.9898, 78.233))) * 41230.23);\n}\nvec3 lin2srgb( vec3 c )\n{\n    return pow( c, vec3(gamma) );\n}\nvec3 srgb2lin( vec3 c )\n{\n    return pow( c, vec3(1.0/gamma));\n}\nvoid main()\n{\n    vec2 uv = vUv;\n    vec2 max_distort = vec2(amount);\n    vec2 oversiz = barrelDistortion( vec2(1,1), max_distort );\n    uv = 2.0 * uv - 1.0;\n    uv = uv / (oversiz*oversiz);\n    uv = 0.5 * uv + 0.5;\n    vec3 sumcol = vec3(0.0);\n    vec3 sumw = vec3(0.0);\n    float rnd = nrand( uv + fract(time) );\n    for ( int i=0; i<num_iter;++i ){\n        float t = (float(i)+rnd) * reci_num_iter_f;\n        vec3 w = spectrum_offset( t );\n        sumw += w;\n        sumcol += w * srgb2lin(texture2D( tDiffuse, barrelDistortion(uv, max_distort*t ) ).rgb);\n    }\n    sumcol.rgb /= sumw;\n    vec3 outcol = lin2srgb(sumcol.rgb);\n    outcol += rnd/255.0;\n    gl_FragColor = vec4( outcol, 1.0);\n}\n"
 
 /***/ }),
 /* 10 */
@@ -46973,7 +46999,7 @@ module.exports = "uniform float brightness;\nuniform float contrast;\nuniform sa
 /* 13 */
 /***/ (function(module, exports) {
 
-module.exports = "uniform sampler2D tInput;\nuniform vec2 center;\nuniform float strength;\nuniform vec2 resolution;\nvarying vec2 vUv;\n\n/*float random(vec3 scale,float seed){return fract(sin(dot(gl_FragCoord.xyz+seed,scale))*43758.5453+seed);}\n\nvoid main(){\n\tvec4 color=vec4(0.0);\n\tfloat total=0.0;\n\tvec2 toCenter=center-vUv*resolution;\n\tfloat offset=random(vec3(12.9898,78.233,151.7182),0.0);\n\tfor(float t=0.0;t<=40.0;t++){\n\t\tfloat percent=(t+offset)/40.0;\n\t\tfloat weight=4.0*(percent-percent*percent);\n\t\tvec4 sample=texture2D(tInput,);\n\t\tsample.rgb*=sample.a;\n\t\tcolor+=sample*weight;\n\t\ttotal+=weight;\n\t}\n\tgl_FragColor=color/total;\n\tgl_FragColor.rgb/=gl_FragColor.a+0.00001;\n}*/\n\nvoid main() {\n\n\tvec4 sum = vec4( 0. );\n\n\tvec2 toCenter = center - vUv * resolution;\n\tvec2 inc = toCenter * strength / resolution;\n\tfloat boost = 2.;\n\n\tinc = center / resolution - vUv;\n\n\tsum += texture2D( tInput, ( vUv - inc * 4. ) ) * 0.051;\n\tsum += texture2D( tInput, ( vUv - inc * 3. ) ) * 0.0918;\n\tsum += texture2D( tInput, ( vUv - inc * 2. ) ) * 0.12245;\n\tsum += texture2D( tInput, ( vUv - inc * 1. ) ) * 0.1531;\n\tsum += texture2D( tInput, ( vUv + inc * 0. ) ) * 0.1633;\n\tsum += texture2D( tInput, ( vUv + inc * 1. ) ) * 0.1531;\n\tsum += texture2D( tInput, ( vUv + inc * 2. ) ) * 0.12245;\n\tsum += texture2D( tInput, ( vUv + inc * 3. ) ) * 0.0918;\n\tsum += texture2D( tInput, ( vUv + inc * 4. ) ) * 0.051;\n\n\tgl_FragColor = sum;\n\n}\n"
+module.exports = "uniform vec2 center;\n//uniform float strength;\nuniform vec2 resolution;\nvarying vec2 vUv;\nuniform sampler2D tDiffuse;\n//\n//void main() {\n//\n//\tvec4 sum = vec4( 0. );\n//\tvec2 toCenter = center - vUv * resolution;\n//\tvec2 inc = vec2(0.);\n//\tinc = center / resolution - vUv;\n//\tsum += texture2D( tDiffuse, ( vUv + inc * 0. ) ) * 0.15;\n//\tgl_FragColor = sum;\n//\n//}\n\n\n\n\nvoid main()\n{\n\n\n    gl_FragColor = texture2D( tDiffuse, vUv );\n\n}\n"
 
 /***/ })
 /******/ ]);
