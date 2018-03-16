@@ -77,23 +77,21 @@ gulp.task('styles', () => {
 
 gulp.task('scripts', () =>
     gulp.src(['./app/scripts/main.js'])
-        //.pipe($.newer('.tmp/scripts'))
-        .pipe($.sourcemaps.init())
-        .pipe($.babel())
-        .pipe($.sourcemaps.write())
-        //
-        //.pipe(gulp.dest('.tmp/scripts'))
-        //
-        //.pipe($.concat('main.min.js'))
-        // .pipe($.uglify({preserveComments: 'some'}))
-        // // Output files
-        //
-        // .pipe($.size({title: 'scripts'}))
-        // .pipe($.sourcemaps.write('.'))
         .pipe(webpack({
             module: {
                 loaders: [
-                    { test: /\.glsl/, loader: 'raw-loader' },
+                    {
+                        test: /\.glsl/,
+                        loader: 'raw-loader' },
+                    {
+                        test: /\.js?$/,
+                        loader: 'babel-loader',
+                        exclude: /node_modules/,
+                        query: {
+                            cacheDirectory: true,
+                            presets: ['env']
+                        }
+                    }
                 ],
             },
             output: {
@@ -148,8 +146,8 @@ gulp.task('serve', ['scripts', 'styles'], () => {
         server: ['.tmp', 'app'],
         port: 3000,
         https: {
-            key: ".ssl/privkey.pem",
-            cert: ".ssl/fullchain.pem"
+            key: ".ssl/hal8001/privkey.pem",
+            cert: ".ssl/hal8001/fullchain.pem"
         }
     });
 
