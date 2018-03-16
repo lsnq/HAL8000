@@ -2,7 +2,7 @@
 /*eslint padded-blocks: "off"*/
 import * as THREE from 'three';
 import EffectComposer, {RenderPass, ShaderPass, CopyShader} from 'three-effectcomposer-es6';
-import {DuoToneShader, BarrelBlurShader, ContrastShader} from './shaders';
+import {DuoToneShader, BarrelBlurShader, ContrastShader, GlitcherShader} from './shaders';
 document.addEventListener('DOMContentLoaded', () => {
     // INIT SCENE
     const scene = new THREE.Scene();
@@ -24,7 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     navigator.mediaDevices.getUserMedia({
         audio: true, video: {
-            facingMode: 'environment'
+            facingMode: 'environment',
+            width: {
+                exact: 1280
+            },
+            height: {
+                exact: 720
+            }
         }
     })
         .then((stream) => {
@@ -53,10 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
 
-    //composer.addPass(new ShaderPass(DuoToneShader));
-    composer.addPass(new ShaderPass(ContrastShader));
 
-    composer.addPass(new ShaderPass(BarrelBlurShader));
+
+    composer.addPass(new ShaderPass(DuoToneShader));
+    //composer.addPass(new ShaderPass(BarrelBlurShader));
+    let time = 0;
+    composer.addPass(new ShaderPass(ContrastShader));
 
 
     const copyPass = new ShaderPass(CopyShader);
@@ -65,8 +73,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ANIMATION
     const render = (timestamp) => {
-        BarrelBlurShader.uniforms.time.value = timestamp;
-
         composer.render();
         requestAnimationFrame(render);
     };

@@ -148,8 +148,8 @@ gulp.task('serve', ['scripts', 'styles'], () => {
         server: ['.tmp', 'app'],
         port: 3000,
         https: {
-            key: ".ssl/hal8001/privkey.pem",
-            cert: ".ssl/hal8001/fullchain.pem"
+            key: ".ssl/privkey.pem",
+            cert: ".ssl/fullchain.pem"
         }
     });
 

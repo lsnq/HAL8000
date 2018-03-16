@@ -3,7 +3,7 @@ uniform float amount;
 uniform float time;
 varying vec2 vUv;
 const int num_iter = 16;
-const float reci_num_iter_f = 0.75 / float(num_iter);
+const float reci_num_iter_f = 0.5 / float(num_iter);
 const float gamma = 2.2;
 const float MAX_DIST_PX = 200.0;
 vec2 barrelDistortion( vec2 p, vec2 amt )
