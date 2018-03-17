@@ -1,3 +1,4 @@
+
 const randomString = () => {
     const phrase = Math.random().toString(36).substring(2, 5) + ' ' + Math.random().toString(36).substring(2, 10);
     return phrase.toUpperCase();
@@ -12,8 +13,10 @@ class HudCanvas {
         this.node.height = this.resolution;
         this.node.id = 'hud';
         this.ctx = this.node.getContext('2d');
+        this.ctx.textBaseline = 'alphabetic';
         this.ctx.fillStyle = '#ff1111';
         this.padding = 170;
+        this.motion = false;
     }
 
     clear() {
@@ -21,12 +24,18 @@ class HudCanvas {
     }
 
     drawTimestamp() {
+        const date = new Date();
         this.ctx.textAlign = 'left';
         this.ctx.textBaseline = 'top';
         this.ctx.font = 'bold 48pt Arial';
-        this.ctx.fillText(String(new Date().getTime()), this.padding - 20, this.padding + 10);
-        this.ctx.font = 'bold 16pt Arial';
-        this.ctx.fillText(String(new Date()), this.padding - 20, this.padding + 80);
+        this.ctx.fillText(String(date.getTime()), this.padding - 20, this.padding + 10);
+        this.ctx.font = 'bold 18pt Arial';
+        this.ctx.fillText(date, this.padding - 20, this.padding + 90);
+        this.ctx.font = 'bold 48pt Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'bottom';
+        const time = date.getHours() + ':' + String(date.getMinutes()).padStart(2, '0');
+        this.ctx.fillText(time, this.resolution / 2 + 70, this.resolution - this.padding);
     }
 
     drawEqualizer() {
@@ -52,6 +61,31 @@ class HudCanvas {
         this.randomArray.push(randomString());
     }
 
+    // событие на движение
+    motionDetected() {
+        console.log('motion detected');
+        this.motion = true;
+        this.timestamp = new Date().getTime();
+    }
+
+    motionAnimation() {
+        if (this.motion) {
+            const timestamp = new Date().getTime() - this.timestamp;
+
+            const opacity = (Math.sin(timestamp / 139) + 1) / 2;
+            this.ctx.textAlign = 'left';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.font = 'bold 80pt Arial';
+            this.ctx.fillStyle = 'rgba(255,0,0, ' + opacity + ')';
+            this.ctx.fillText('MENACE!', this.padding, this.resolution / 2);
+            this.ctx.fillStyle = 'rgba(255,0,0,255)';
+
+            if (timestamp >= 5000) {
+                this.motion = false;
+            }
+        }
+    }
+
     render(stream) {
         if (stream) {
             // AUDIO PART INIT
@@ -64,6 +98,14 @@ class HudCanvas {
             this.analyser.fftSize = 32;
             this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
         }
+    }
+
+    animate() {
+        this.clear();
+        this.drawTimestamp();
+        this.drawEqualizer();
+        this.drawRandom();
+        this.motionAnimation();
     }
 }
 

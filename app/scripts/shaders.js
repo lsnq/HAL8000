@@ -13,7 +13,7 @@ export const DuoToneShader = {
             value: null
         },
         colLight: {
-            value: new THREE.Color(0xff00000)
+            value: new THREE.Color('#1833fd')
         },
         colDark: {
             value: new THREE.Color(0x0000000)
