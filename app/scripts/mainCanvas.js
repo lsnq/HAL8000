@@ -30,8 +30,8 @@ class MainCanvas {
             audio: true,
             video: {
                 facingMode: 'environment',
-                width: {max: window.innerWidth / window.innerHeight * 480},
-                height: {max: 480}
+                // width: {max: window.innerWidth / window.innerHeight * 480},
+                // height: {max: 480}
             }
         };
 
