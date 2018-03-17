@@ -15,12 +15,12 @@ class MainCanvas {
         this.scene = new THREE.Scene();
         this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
         this.renderer = new THREE.WebGLRenderer({
-            preserveDrawingBuffer: true,
+            preserveDrawingBuffer: true
         });
         this.renderer.autoClear = false;
         this.hudCanvas = new HudCanvas();
         this.motionDetector = new MotionDetector(this.video, () => {
-            this.hudCanvas.motionDetected()
+            this.hudCanvas.motionDetected();
         });
         this.renderer.setClearColor('#000000');
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -30,8 +30,8 @@ class MainCanvas {
             audio: true,
             video: {
                 facingMode: 'environment',
-                width: window.innerWidth / window.innerHeight * 480,
-                height: 480
+                width: {max: window.innerWidth / window.innerHeight * 480},
+                height: {max: 480}
             }
         };
 

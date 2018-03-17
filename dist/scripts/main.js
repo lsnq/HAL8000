@@ -46561,8 +46561,8 @@ MainCanvas = function () {
             audio: true,
             video: {
                 facingMode: 'environment',
-                width: window.innerWidth / window.innerHeight * 480,
-                height: 480 } };
+                width: { max: window.innerWidth / window.innerHeight * 480 },
+                height: { max: 480 } } };
 
 
 
@@ -47165,14 +47165,14 @@ HudCanvas = function () {
             this.randomArray.push(randomString());
         }
 
-        // событие на движение
+        // если произошло движение запускаем событие
     }, { key: 'motionDetected', value: function motionDetected() {
-            console.log('motion detected');
             this.motion = true;
             this.timestamp = new Date().getTime();
-        } }, { key: 'motionAnimation', value: function motionAnimation()
+        }
 
-        {
+        // анимация при инициализации движения. через 5 секунд выключаем
+    }, { key: 'motionAnimation', value: function motionAnimation() {
             if (this.motion) {
                 var timestamp = new Date().getTime() - this.timestamp;
 

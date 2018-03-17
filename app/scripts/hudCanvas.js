@@ -61,13 +61,13 @@ class HudCanvas {
         this.randomArray.push(randomString());
     }
 
-    // событие на движение
+    // если произошло движение запускаем событие
     motionDetected() {
-        console.log('motion detected');
         this.motion = true;
         this.timestamp = new Date().getTime();
     }
 
+    // анимация при инициализации движения. через 5 секунд выключаем
     motionAnimation() {
         if (this.motion) {
             const timestamp = new Date().getTime() - this.timestamp;

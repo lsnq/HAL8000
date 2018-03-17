@@ -91,7 +91,7 @@ gulp.task('scripts', () =>
                             presets: ['env']
                         }
                     }
-                ],
+                ]
             },
             output: {
                 filename: 'main.js'
