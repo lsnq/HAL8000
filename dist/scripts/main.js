@@ -46523,38 +46523,23 @@ var _three = __webpack_require__(0);var THREE = _interopRequireWildcard(_three);
 var _threeAddons = __webpack_require__(3);
 
 var _threeEffectcomposerEs = __webpack_require__(1);var _threeEffectcomposerEs2 = _interopRequireDefault(_threeEffectcomposerEs);
-var _shaders = __webpack_require__(9);function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}function _interopRequireWildcard(obj) {if (obj && obj.__esModule) {return obj;} else {var newObj = {};if (obj != null) {for (var key in obj) {if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];}}newObj.default = obj;return newObj;}} /*eslint no-console: "off"*/ /*eslint padded-blocks: "off"*/
+var _shaders = __webpack_require__(9);
 
+var _hudCanvas = __webpack_require__(14);var _hudCanvas2 = _interopRequireDefault(_hudCanvas);function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}function _interopRequireWildcard(obj) {if (obj && obj.__esModule) {return obj;} else {var newObj = {};if (obj != null) {for (var key in obj) {if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];}}newObj.default = obj;return newObj;}}
 
 document.addEventListener('DOMContentLoaded', function () {
-    var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    var analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 1024;
-    var bufferLength = analyser.frequencyBinCount;
-    var dataArray = new Uint8Array(bufferLength);
-    var source = void 0;
-
-    // HUD CANVAS TEST
-    var width = window.innerWidth;
-    var height = window.innerHeight;
-
-    var hudCanvas = document.getElementById('hud');
-    hudCanvas.width = width;
-    hudCanvas.height = height;
-
-    var ctx = hudCanvas.getContext('2d');
-    var text = 'init system()';
-    ctx.fillStyle = 'white';
-
-    ctx.fillText(text, 50, 50);
+    var hudCanvas = new _hudCanvas2.default();
 
     // INIT SCENE
     var scene = new THREE.Scene();
     var camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
     var renderer = new THREE.WebGLRenderer({
-        preserveDrawingBuffer: true, alpha: true, premultipliedAlpha: true });
-
+        preserveDrawingBuffer: true
+        // premultipliedAlpha: false,
+        // alpha: true
+    });
+    renderer.autoClear = false;
 
     renderer.setClearColor('#000000');
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -46566,25 +46551,28 @@ document.addEventListener('DOMContentLoaded', function () {
     var video = document.createElement('video');
     video.setAttribute('playsinline', '');
     video.setAttribute('muted', 'true');
-
     var constraints = {
         audio: true,
         video: {
-            facingMode: 'environment' } };
+            facingMode: 'environment',
+            width: window.innerWidth / window.innerHeight * 480,
+            height: 480 }
 
+        // video: false
+    };
 
 
     navigator.mediaDevices.getUserMedia(constraints).
     then(function (stream) {
-        // audio part
-        var source = audioCtx.createMediaStreamSource(stream);
-        source.connect(analyser);
+        hudCanvas.render(stream);
+        console.log('stream ready');
 
         // video part
         video.srcObject = stream;
         video.onloadedmetadata = function () {
             video.muted = true;
             console.log('hooray');
+
             video.play();
         };
     });
@@ -46594,15 +46582,17 @@ document.addEventListener('DOMContentLoaded', function () {
     texture.minFilter = THREE.LinearFilter;
     texture.magFilter = THREE.LinearFilter;
     texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.flipY = true;
     texture.wrapT = THREE.ClampToEdgeWrapping;
 
     // BASE OBJECT
+    // ОСНОВНОЙ КОНТЕЙНЕР!
     var geometry = new THREE.PlaneBufferGeometry(1.6, 1.6);
     var material = new THREE.MeshBasicMaterial({ map: texture });
     var plane = new THREE.Mesh(geometry, material);
     scene.add(plane);
 
-    // HUD
+    // HUD CIRCLE
     var alphaMap = new THREE.TextureLoader().load('../images/alpha.png');
     var hudMaterial = new THREE.MeshBasicMaterial({
         alphaMap: alphaMap,
@@ -46610,10 +46600,20 @@ document.addEventListener('DOMContentLoaded', function () {
 
     var hudGeometry = new THREE.PlaneBufferGeometry(0.5, 0.5 * (window.innerWidth / window.innerHeight));
     var hudPlane = new THREE.Mesh(hudGeometry, hudMaterial);
-    hudPlane.width = 500;
-    hudPlane.height = 500;
-
     scene.add(hudPlane);
+
+    // HUD MAIN
+    // const testTexture = new THREE.Texture(hudCanvas.node);
+    var testTexture = new THREE.TextureLoader().load('../images/hud_t_red.png');
+    var texturePass = new _threeAddons.TexturePass(testTexture, 1.0);
+    texturePass.material.transparent = true;
+    texturePass.material.premultipliedAlpha = false;
+
+    // TEST TEXTURE FROM CANVAS
+    var testTexture2 = new THREE.Texture(hudCanvas.node);
+    var texturePass2 = new _threeAddons.TexturePass(testTexture2, 1);
+    texturePass2.material.transparent = true;
+    texturePass2.material.premultipliedAlpha = false;
 
     // COMPOSER
     var composer = new _threeEffectcomposerEs2.default(renderer);
@@ -46621,11 +46621,14 @@ document.addEventListener('DOMContentLoaded', function () {
     composer.addPass(new _threeEffectcomposerEs.RenderPass(scene, camera));
     composer.addPass(new _threeEffectcomposerEs.ShaderPass(_shaders.BadTVShader));
     composer.addPass(new _threeEffectcomposerEs.ShaderPass(_shaders.ScanlinesShader));
+
     composer.addPass(new _threeEffectcomposerEs.ShaderPass(_shaders.ContrastShader));
     composer.addPass(new _threeEffectcomposerEs.ShaderPass(_shaders.GlowShader));
+
     composer.addPass(new _threeEffectcomposerEs.ShaderPass(_shaders.DuoToneShader));
+    composer.addPass(texturePass2);
+
     composer.addPass(new _threeEffectcomposerEs.ShaderPass(_shaders.BarrelBlurShader));
-    composer.addPass(new _threeEffectcomposerEs.ShaderPass(_threeAddons.VignetteShader));
 
     var copyPass = new _threeEffectcomposerEs.ShaderPass(_threeEffectcomposerEs.CopyShader);
     copyPass.renderToScreen = true;
@@ -46635,30 +46638,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var render = function render(timestamp) {
         composer.passes[1].uniforms.time.value = timestamp;
         composer.passes[2].uniforms.time.value = timestamp;
-
         composer.render();
-
-        analyser.getByteTimeDomainData(dataArray);
-        ctx.clearRect(0, 0, width, height);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = 'rgb(255, 255, 255)';
-
-        ctx.beginPath();
-        var sliceWidth = Number(width) / bufferLength;
-        var x = 0;
-        for (var i = 0; i < bufferLength; i++) {
-            var v = dataArray[i] / 256.0;
-            var y = v * (height / 2);
-            if (i === 0) {
-                ctx.moveTo(x, y);
-            } else {
-                ctx.lineTo(x, y);
-            }
-            x += sliceWidth;
-        }
-        ctx.lineTo(width, height / 2);
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        testTexture2.needsUpdate = true;
+        hudCanvas.clear();
+        hudCanvas.drawTimestamp();
+        hudCanvas.drawEqualizer();
+        hudCanvas.drawRandom();
         requestAnimationFrame(render);
     };
     render();
@@ -46666,7 +46651,7 @@ document.addEventListener('DOMContentLoaded', function () {
     window.addEventListener('resize', function () {
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
-});
+}); /*eslint no-console: "off"*/ /*eslint padded-blocks: "off"*/
 
 /***/ }),
 /* 3 */
@@ -46996,7 +46981,7 @@ var ScanlinesShader = exports.ScanlinesShader = {
             value: .232 },
 
         count: {
-            value: innerHeight / 2 },
+            value: innerHeight / 16 },
 
         height: {
             value: innerHeight } },
@@ -47086,6 +47071,82 @@ module.exports = "uniform sampler2D tDiffuse;\nuniform vec3 colLight;\nuniform v
 /***/ (function(module, exports) {
 
 module.exports = "uniform sampler2D tDiffuse;\nuniform float amount;\nvarying vec2 vUv;\n\nvoid main() {\n    float factor = (1.015*(amount + 1.0))/(1.0*(1.015-amount));\n    vec3 color = texture2D(tDiffuse, vUv).rgb;\n    vec3 colorContrasted = factor * (color - 0.5)  + 0.5;\n    gl_FragColor.rgb = colorContrasted + 0.1;\n    gl_FragColor.a = 1.0;\n}\n"
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });var _createClass = function () {function defineProperties(target, props) {for (var i = 0; i < props.length; i++) {var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);}}return function (Constructor, protoProps, staticProps) {if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;};}();function _classCallCheck(instance, Constructor) {if (!(instance instanceof Constructor)) {throw new TypeError("Cannot call a class as a function");}}var randomString = function randomString() {
+    var phrase = Math.random().toString(36).substring(2, 5) + ' ' + Math.random().toString(36).substring(2, 10);
+    return phrase.toUpperCase();
+};var
+
+HudCanvas = function () {
+    function HudCanvas() {_classCallCheck(this, HudCanvas);
+        this.randomArray = new Array(64).fill(true).map(function () {return randomString();});
+        this.node = document.createElement('canvas');
+        this.resolution = 1024;
+        this.node.width = this.resolution;
+        this.node.height = this.resolution;
+        this.node.id = 'hud';
+        this.ctx = this.node.getContext('2d');
+        this.ctx.fillStyle = '#ff1111';
+        this.padding = 170;
+    }_createClass(HudCanvas, [{ key: 'clear', value: function clear()
+
+        {
+            this.ctx.clearRect(0, 0, this.resolution, this.resolution);
+        } }, { key: 'drawTimestamp', value: function drawTimestamp()
+
+        {
+            this.ctx.textAlign = 'left';
+            this.ctx.textBaseline = 'top';
+            this.ctx.font = 'bold 48pt Arial';
+            this.ctx.fillText(String(new Date().getTime()), this.padding - 20, this.padding + 10);
+            this.ctx.font = 'bold 16pt Arial';
+            this.ctx.fillText(String(new Date()), this.padding - 20, this.padding + 80);
+        } }, { key: 'drawEqualizer', value: function drawEqualizer()
+
+        {var _this = this;
+            if (this.stream) {
+                this.analyser.getByteFrequencyData(this.frequencyData);
+                var x = this.padding - 20;
+                this.frequencyData.forEach(function (size) {
+                    var y = _this.resolution - size - _this.padding;
+                    // x, y width, height
+                    _this.ctx.fillRect(x, y, 18, size);
+                    x += 20;
+                });
+            }
+        } }, { key: 'drawRandom', value: function drawRandom()
+
+        {var _this2 = this;
+            this.ctx.textAlign = 'right';
+            this.ctx.font = 'bold 16pt monospace';
+            this.randomArray.forEach(function (el, index) {
+                _this2.ctx.fillText(el, _this2.resolution - _this2.padding + 20, index * 20 + _this2.padding);
+            });
+            this.randomArray.shift();
+            this.randomArray.push(randomString());
+        } }, { key: 'render', value: function render(
+
+        stream) {
+            if (stream) {
+                // AUDIO PART INIT
+                this.stream = stream;
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                this.analyser = this.audioCtx.createAnalyser();
+                this.audioSource = this.audioCtx.createMediaStreamSource(stream);
+                this.audioSource.connect(this.analyser);
+
+                this.analyser.fftSize = 32;
+                this.frequencyData = new Uint8Array(this.analyser.frequencyBinCount);
+            }
+        } }]);return HudCanvas;}();exports.default =
+
+
+HudCanvas;
 
 /***/ })
 /******/ ]);

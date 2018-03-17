@@ -72,7 +72,7 @@ export const ScanlinesShader = {
             value: .232
         },
         count: {
-            value: innerHeight / 2
+            value: innerHeight / 16
         },
         height: {
             value: innerHeight

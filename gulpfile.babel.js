@@ -88,7 +88,6 @@ gulp.task('scripts', () =>
                         loader: 'babel-loader',
                         exclude: /node_modules/,
                         query: {
-                            cacheDirectory: true,
                             presets: ['env']
                         }
                     }
