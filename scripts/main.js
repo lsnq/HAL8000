@@ -46560,10 +46560,10 @@ MainCanvas = function () {
         this.constraints = {
             audio: true,
             video: {
-                facingMode: 'environment',
-                width: { max: window.innerWidth / window.innerHeight * 480 },
-                height: { max: 480 } } };
-
+                facingMode: 'environment'
+                // width: {max: window.innerWidth / window.innerHeight * 480},
+                // height: {max: 480}
+            } };
 
 
         // устаналвивает размер канваса при изменении размеров окна
