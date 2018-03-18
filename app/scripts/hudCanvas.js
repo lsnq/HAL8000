@@ -1,12 +1,6 @@
-
-const randomString = () => {
-    const phrase = Math.random().toString(36).substring(2, 5) + ' ' + Math.random().toString(36).substring(2, 10);
-    return phrase.toUpperCase();
-};
-
 class HudCanvas {
     constructor() {
-        this.randomArray = new Array(64).fill(true).map(() => randomString());
+        this.randomArray = new Array(64).fill(true).map(() => this.randomString());
         this.node = document.createElement('canvas');
         this.resolution = 1024;
         this.node.width = this.resolution;
@@ -14,9 +8,11 @@ class HudCanvas {
         this.node.id = 'hud';
         this.ctx = this.node.getContext('2d');
         this.ctx.textBaseline = 'alphabetic';
-        this.ctx.fillStyle = '#ff1111';
+        this.ctx.fillStyle = '#ffffff';
         this.padding = 170;
         this.motion = false;
+        this.noSignal = true;
+        this.timestamp = 0;
     }
 
     clear() {
@@ -58,7 +54,7 @@ class HudCanvas {
             this.ctx.fillText(el, this.resolution - this.padding + 20, index * 20 + this.padding);
         });
         this.randomArray.shift();
-        this.randomArray.push(randomString());
+        this.randomArray.push(this.randomString());
     }
 
     // если произошло движение запускаем событие
@@ -68,19 +64,20 @@ class HudCanvas {
     }
 
     // анимация при инициализации движения. через 5 секунд выключаем
-    motionAnimation() {
-        if (this.motion) {
+    warningTextAnimation() {
+        if (this.motion || this.noSignal) {
+            const msg = this.noSignal ? 'NO SIGNAL!' : 'DANGER';
             const timestamp = new Date().getTime() - this.timestamp;
-
+            // мигаем текстом, всё очень страшно
             const opacity = (Math.sin(timestamp / 139) + 1) / 2;
             this.ctx.textAlign = 'left';
             this.ctx.textBaseline = 'middle';
-            this.ctx.font = 'bold 80pt Arial';
+            this.ctx.font = 'bold ' + (this.noSignal ? 60 : 80) + 'pt Arial';
             this.ctx.fillStyle = 'rgba(255,0,0, ' + opacity + ')';
-            this.ctx.fillText('MENACE!', this.padding, this.resolution / 2);
-            this.ctx.fillStyle = 'rgba(255,0,0,255)';
+            this.ctx.fillText(msg, this.padding, this.resolution / 2);
+            this.ctx.fillStyle = 'rgba(255,255,255,255)';
 
-            if (timestamp >= 5000) {
+            if (timestamp >= 5000 && !this.noSignal) {
                 this.motion = false;
             }
         }
@@ -105,7 +102,12 @@ class HudCanvas {
         this.drawTimestamp();
         this.drawEqualizer();
         this.drawRandom();
-        this.motionAnimation();
+        this.warningTextAnimation();
+    }
+
+    randomString() {
+        const phrase = Math.random().toString(36).substring(2, 5) + ' ' + Math.random().toString(36).substring(2, 10);
+        return phrase.toUpperCase();
     }
 }
 

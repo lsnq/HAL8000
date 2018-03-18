@@ -32,15 +32,14 @@ class MotionDetector {
         }
         const mediumBrightness = totalBrightness / (imageData.data.length / 4);
         const diff = Math.abs(this.lastBrightness - mediumBrightness);
+        // diff - чувствительность.
         if (diff > 3) {
             const now = new Date().getTime();
             this.lastBrightness = mediumBrightness;
-
             if ((now - this.lastTimestamp) > 5e3) {
                 // если с последнего изменения больше 5 секунд, вызываем коллбэк
                 this.callback();
             }
-
             this.lastTimestamp = new Date().getTime();
         }
     }

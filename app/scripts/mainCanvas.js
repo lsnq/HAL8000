@@ -7,11 +7,12 @@ import {
 } from './shaders';
 import HudCanvas from './hudCanvas';
 import MotionDetector from './motionDetector';
+import AngryVoice from './audioOutput';
 
 class MainCanvas {
     constructor() {
         this.setVideo();
-
+        this.angryVoice = new AngryVoice();
         this.scene = new THREE.Scene();
         this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
         this.renderer = new THREE.WebGLRenderer({
@@ -21,6 +22,7 @@ class MainCanvas {
         this.hudCanvas = new HudCanvas();
         this.motionDetector = new MotionDetector(this.video, () => {
             this.hudCanvas.motionDetected();
+            this.angryVoice.render();
         });
         this.renderer.setClearColor('#000000');
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -29,7 +31,10 @@ class MainCanvas {
         this.constraints = {
             audio: true,
             video: {
-                facingMode: 'environment',
+                facingMode: 'environment'
+                // наличие этих параметров отчего-то вызывает exception в iOS Safari
+                // просьба к уважаемому проверяющему подсказать, как лучше
+                // установить пропорции для видео в constraints
                 // width: {max: window.innerWidth / window.innerHeight * 480},
                 // height: {max: 480}
             }
@@ -57,11 +62,12 @@ class MainCanvas {
                 this.video.muted = true;
                 this.video.onloadedmetadata = () => {
                     this.video.play();
+                    this.hudCanvas.noSignal = false;
                 };
             });
     }
 
-    // добавляем наше результаты нашего творчества в сцену
+    // добавляем результаты нашего творчества в сцену
     setScene() {
         // TEXTURE
         const texture = new THREE.VideoTexture(this.video);

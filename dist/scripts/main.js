@@ -46537,12 +46537,13 @@ var _shaders = __webpack_require__(10);
 
 
 var _hudCanvas = __webpack_require__(15);var _hudCanvas2 = _interopRequireDefault(_hudCanvas);
-var _motionDetector = __webpack_require__(16);var _motionDetector2 = _interopRequireDefault(_motionDetector);function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}function _interopRequireWildcard(obj) {if (obj && obj.__esModule) {return obj;} else {var newObj = {};if (obj != null) {for (var key in obj) {if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];}}newObj.default = obj;return newObj;}}function _classCallCheck(instance, Constructor) {if (!(instance instanceof Constructor)) {throw new TypeError("Cannot call a class as a function");}}var
+var _motionDetector = __webpack_require__(16);var _motionDetector2 = _interopRequireDefault(_motionDetector);
+var _audioOutput = __webpack_require__(17);var _audioOutput2 = _interopRequireDefault(_audioOutput);function _interopRequireDefault(obj) {return obj && obj.__esModule ? obj : { default: obj };}function _interopRequireWildcard(obj) {if (obj && obj.__esModule) {return obj;} else {var newObj = {};if (obj != null) {for (var key in obj) {if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key];}}newObj.default = obj;return newObj;}}function _classCallCheck(instance, Constructor) {if (!(instance instanceof Constructor)) {throw new TypeError("Cannot call a class as a function");}}var
 
 MainCanvas = function () {
     function MainCanvas() {var _this = this;_classCallCheck(this, MainCanvas);
         this.setVideo();
-
+        this.angryVoice = new _audioOutput2.default();
         this.scene = new THREE.Scene();
         this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
         this.renderer = new THREE.WebGLRenderer({
@@ -46552,6 +46553,7 @@ MainCanvas = function () {
         this.hudCanvas = new _hudCanvas2.default();
         this.motionDetector = new _motionDetector2.default(this.video, function () {
             _this.hudCanvas.motionDetected();
+            _this.angryVoice.render();
         });
         this.renderer.setClearColor('#000000');
         this.renderer.setSize(window.innerWidth, window.innerHeight);
@@ -46561,6 +46563,9 @@ MainCanvas = function () {
             audio: true,
             video: {
                 facingMode: 'environment'
+                // наличие этих параметров отчего-то вызывает exception в iOS Safari
+                // просьба к уважаемому проверяющему подсказать, как лучше
+                // установить пропорции для видео в constraints
                 // width: {max: window.innerWidth / window.innerHeight * 480},
                 // height: {max: 480}
             } };
@@ -46588,11 +46593,12 @@ MainCanvas = function () {
                 _this2.video.muted = true;
                 _this2.video.onloadedmetadata = function () {
                     _this2.video.play();
+                    _this2.hudCanvas.noSignal = false;
                 };
             });
         }
 
-        // добавляем наше результаты нашего творчества в сцену
+        // добавляем результаты нашего творчества в сцену
     }, { key: 'setScene', value: function setScene() {
             // TEXTURE
             var texture = new THREE.VideoTexture(this.video);
@@ -47102,15 +47108,9 @@ module.exports = "uniform sampler2D tDiffuse;\nuniform float amount;\nvarying ve
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });var _createClass = function () {function defineProperties(target, props) {for (var i = 0; i < props.length; i++) {var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);}}return function (Constructor, protoProps, staticProps) {if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;};}();function _classCallCheck(instance, Constructor) {if (!(instance instanceof Constructor)) {throw new TypeError("Cannot call a class as a function");}}
-var randomString = function randomString() {
-    var phrase = Math.random().toString(36).substring(2, 5) + ' ' + Math.random().toString(36).substring(2, 10);
-    return phrase.toUpperCase();
-};var
-
-HudCanvas = function () {
-    function HudCanvas() {_classCallCheck(this, HudCanvas);
-        this.randomArray = new Array(64).fill(true).map(function () {return randomString();});
+Object.defineProperty(exports, "__esModule", { value: true });var _createClass = function () {function defineProperties(target, props) {for (var i = 0; i < props.length; i++) {var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);}}return function (Constructor, protoProps, staticProps) {if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;};}();function _classCallCheck(instance, Constructor) {if (!(instance instanceof Constructor)) {throw new TypeError("Cannot call a class as a function");}}var HudCanvas = function () {
+    function HudCanvas() {var _this = this;_classCallCheck(this, HudCanvas);
+        this.randomArray = new Array(64).fill(true).map(function () {return _this.randomString();});
         this.node = document.createElement('canvas');
         this.resolution = 1024;
         this.node.width = this.resolution;
@@ -47118,9 +47118,11 @@ HudCanvas = function () {
         this.node.id = 'hud';
         this.ctx = this.node.getContext('2d');
         this.ctx.textBaseline = 'alphabetic';
-        this.ctx.fillStyle = '#ff1111';
+        this.ctx.fillStyle = '#ffffff';
         this.padding = 170;
         this.motion = false;
+        this.noSignal = true;
+        this.timestamp = 0;
     }_createClass(HudCanvas, [{ key: 'clear', value: function clear()
 
         {
@@ -47142,27 +47144,27 @@ HudCanvas = function () {
             this.ctx.fillText(time, this.resolution / 2 + 70, this.resolution - this.padding);
         } }, { key: 'drawEqualizer', value: function drawEqualizer()
 
-        {var _this = this;
+        {var _this2 = this;
             if (this.stream) {
                 this.analyser.getByteFrequencyData(this.frequencyData);
                 var x = this.padding - 20;
                 this.frequencyData.forEach(function (size) {
-                    var y = _this.resolution - size - _this.padding;
+                    var y = _this2.resolution - size - _this2.padding;
                     // x, y width, height
-                    _this.ctx.fillRect(x, y, 18, size);
+                    _this2.ctx.fillRect(x, y, 18, size);
                     x += 20;
                 });
             }
         } }, { key: 'drawRandom', value: function drawRandom()
 
-        {var _this2 = this;
+        {var _this3 = this;
             this.ctx.textAlign = 'right';
             this.ctx.font = 'bold 16pt monospace';
             this.randomArray.forEach(function (el, index) {
-                _this2.ctx.fillText(el, _this2.resolution - _this2.padding + 20, index * 20 + _this2.padding);
+                _this3.ctx.fillText(el, _this3.resolution - _this3.padding + 20, index * 20 + _this3.padding);
             });
             this.randomArray.shift();
-            this.randomArray.push(randomString());
+            this.randomArray.push(this.randomString());
         }
 
         // если произошло движение запускаем событие
@@ -47172,19 +47174,20 @@ HudCanvas = function () {
         }
 
         // анимация при инициализации движения. через 5 секунд выключаем
-    }, { key: 'motionAnimation', value: function motionAnimation() {
-            if (this.motion) {
+    }, { key: 'warningTextAnimation', value: function warningTextAnimation() {
+            if (this.motion || this.noSignal) {
+                var msg = this.noSignal ? 'NO SIGNAL!' : 'DANGER';
                 var timestamp = new Date().getTime() - this.timestamp;
-
+                // мигаем текстом, всё очень страшно
                 var opacity = (Math.sin(timestamp / 139) + 1) / 2;
                 this.ctx.textAlign = 'left';
                 this.ctx.textBaseline = 'middle';
-                this.ctx.font = 'bold 80pt Arial';
+                this.ctx.font = 'bold ' + (this.noSignal ? 60 : 80) + 'pt Arial';
                 this.ctx.fillStyle = 'rgba(255,0,0, ' + opacity + ')';
-                this.ctx.fillText('MENACE!', this.padding, this.resolution / 2);
-                this.ctx.fillStyle = 'rgba(255,0,0,255)';
+                this.ctx.fillText(msg, this.padding, this.resolution / 2);
+                this.ctx.fillStyle = 'rgba(255,255,255,255)';
 
-                if (timestamp >= 5000) {
+                if (timestamp >= 5000 && !this.noSignal) {
                     this.motion = false;
                 }
             }
@@ -47209,7 +47212,12 @@ HudCanvas = function () {
             this.drawTimestamp();
             this.drawEqualizer();
             this.drawRandom();
-            this.motionAnimation();
+            this.warningTextAnimation();
+        } }, { key: 'randomString', value: function randomString()
+
+        {
+            var phrase = Math.random().toString(36).substring(2, 5) + ' ' + Math.random().toString(36).substring(2, 10);
+            return phrase.toUpperCase();
         } }]);return HudCanvas;}();exports.default =
 
 
@@ -47254,21 +47262,62 @@ MotionDetector = function () {
             }
             var mediumBrightness = totalBrightness / (imageData.data.length / 4);
             var diff = Math.abs(this.lastBrightness - mediumBrightness);
+            // diff - чувствительность.
             if (diff > 3) {
                 var now = new Date().getTime();
                 this.lastBrightness = mediumBrightness;
-
                 if (now - this.lastTimestamp > 5e3) {
                     // если с последнего изменения больше 5 секунд, вызываем коллбэк
                     this.callback();
                 }
-
                 this.lastTimestamp = new Date().getTime();
             }
         } }]);return MotionDetector;}();exports.default =
 
 
 MotionDetector;
+
+/***/ }),
+/* 17 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });var _createClass = function () {function defineProperties(target, props) {for (var i = 0; i < props.length; i++) {var descriptor = props[i];descriptor.enumerable = descriptor.enumerable || false;descriptor.configurable = true;if ("value" in descriptor) descriptor.writable = true;Object.defineProperty(target, descriptor.key, descriptor);}}return function (Constructor, protoProps, staticProps) {if (protoProps) defineProperties(Constructor.prototype, protoProps);if (staticProps) defineProperties(Constructor, staticProps);return Constructor;};}();function _classCallCheck(instance, Constructor) {if (!(instance instanceof Constructor)) {throw new TypeError("Cannot call a class as a function");}}var AudioOutput = function () {
+    function AudioOutput() {_classCallCheck(this, AudioOutput);
+        this.msg = new SpeechSynthesisUtterance();
+        this.msg.pitch = 0.5;
+
+        this.getVoice();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = this.getVoice.bind(this);
+        }
+    }_createClass(AudioOutput, [{ key: 'getVoice', value: function getVoice()
+
+        {
+            var voices = window.speechSynthesis.getVoices();
+            this.msg.voice = voices.find(function (el) {
+                return el.lang === 'en-US';
+            });
+        } }, { key: 'getText', value: function getText()
+
+        {
+            var phrases = [
+            'Motion detected! Unrecognized liveform!',
+            'Violation! Exterminate! Exterminate!',
+            'Who`s there? Anyone alive?'];
+
+
+            var randomInt = Math.floor(Math.random() * phrases.length);
+            this.msg.text = phrases[randomInt];
+        } }, { key: 'render', value: function render()
+
+        {
+            this.getText();
+            window.speechSynthesis.speak(this.msg);
+        } }]);return AudioOutput;}();exports.default =
+
+
+AudioOutput;
 
 /***/ })
 /******/ ]);
