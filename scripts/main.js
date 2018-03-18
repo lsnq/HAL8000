@@ -46615,7 +46615,7 @@ MainCanvas = function () {
             this.scene.add(plane);
 
             // HUD CIRCLE
-            var alphaMap = new THREE.TextureLoader().load('../images/alpha.png');
+            var alphaMap = new THREE.TextureLoader().load('images/alpha.png');
             var hudMaterial = new THREE.MeshBasicMaterial({
                 alphaMap: alphaMap,
                 transparent: true });
